@@ -64,6 +64,14 @@ spec:
             {{- end }}
             - name: PGPOOL_ENABLE_LOAD_BALANCING
               value: {{ ternary "yes" "no" .Values.pgpool.useLoadBalancing | quote }}
+            - name: PGPOOL_DISABLE_LOAD_BALANCE_ON_WRITE
+              value: {{ .Values.pgpool.disableLoadBalanceOnWrite | quote }}
+            - name: PGPOOL_ENABLE_POOL_HBA
+              value: {{ ternary "yes" "no" .Values.pgpool.enablePoolHba | quote }}
+            - name: PGPOOL_ENABLE_POOL_PASSWD
+              value: {{ ternary "yes" "no" .Values.pgpool.enablePoolPasswd | quote }}
+            - name: PGPOOL_NUM_INIT_CHILDREN
+              value: {{ .Values.pgpool.numInitChildren | quote }}
             - name: PGPOOL_ENABLE_LDAP
               value: {{ ternary "yes" "no" .Values.ldap.enabled | quote }}
             {{- if .Values.ldap.enabled }}
