@@ -84,6 +84,11 @@ volumePermissionsImage:
   # pullSecrets:
   #   - myRegistryKeySecretName
 
+walgImage:
+  registry: docker.io
+  repository: sysbind/wal-g
+  tag: latest
+
 ## Bitnami PostgreSQL Prometheus exporter image
 ## ref: https://hub.docker.com/r/bitnami/pgpool/tags/
 ##

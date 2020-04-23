@@ -194,6 +194,14 @@ spec:
             - name: data
               mountPath: {{ .Values.persistence.mountPath }}
             {{- end }}
+        {{- if .Values.walg.enabled }}
+        - name: wal-g
+          image: {{ .Values.walgImage.registry }}/{{ .Values.walgImage.repository }}:{{ .Values.walgImage.tag }}
+          imagePullPolicy: {{ .Values.walgImage.pullPolicy | quote }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.persistence.mountPath }}
+        {{ end }}
         {{- if .Values.metrics.enabled }}
         - name: metrics
           image: {{ include "postgresql-ha.metricsImage" . }}
