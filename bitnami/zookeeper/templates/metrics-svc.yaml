@@ -2,15 +2,28 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "zookeeper.fullname" . }}-exporter
+  name: {{ template "zookeeper.fullname" . }}-metrics
+  namespace: {{ template "zookeeper.namespace" . }}
   labels: {{- include "zookeeper.labels" . | nindent 4 }}
-    app.kubernetes.io/component: metrics
+    app.kubernetes.io/component: zookeeper
+    {{- if .Values.commonLabels }}
+    {{- include "zookeeper.tplValue" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if or .Values.metrics.service.annotations .Values.commonAnnotations }}
+  annotations:
+    {{- if .Values.metrics.service.annotations }}
+    {{ include "zookeeper.tplValue" ( dict "value" .Values.metrics.service.annotations "context" $) | nindent 4 }}
+    {{- end }}
+    {{- if .Values.commonAnnotations }}
+    {{- include "zookeeper.tplValue" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- end }}
 spec:
-  type: ClusterIP
+  type: {{ .Values.metrics.service.type }}
   ports:
-    - name: metrics
-      port: 9141
+    - name: tcp-metrics
+      port: {{ .Values.metrics.service.port }}
       targetPort: metrics
   selector: {{- include "zookeeper.matchLabels" . | nindent 4 }}
-    app.kubernetes.io/component: metrics
+    app.kubernetes.io/component: zookeeper
 {{- end }}

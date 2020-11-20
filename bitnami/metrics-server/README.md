@@ -2,7 +2,7 @@
 
 [Metrics Server](https://github.com/kubernetes-incubator/metrics-server) is a cluster-wide aggregator of resource usage data. Metrics Server collects metrics from the Summary API, exposed by Kubelet on each node.
 
-## TL;DR;
+## TL;DR
 
 ```console
 $ helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -18,7 +18,7 @@ Bitnami charts can be used with [Kubeapps](https://kubeapps.com/) for deployment
 ## Prerequisites
 
 - Kubernetes 1.12+
-- Helm 2.11+ or Helm 3.0-beta3+
+- Helm 3.0-beta3+
 
 ## Installing the Chart
 
@@ -48,7 +48,7 @@ The command removes all the Kubernetes components associated with the chart and 
 The following tables lists the configurable parameters of the Metrics Server chart and their default values.
 
 | Parameter                 | Description                                                                                                                     | Default                                                 |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+|---------------------------|---------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------|
 | `global.imageRegistry`    | Global Docker image registry                                                                                                    | `nil`                                                   |
 | `global.imagePullSecrets` | Global Docker registry secret names as an array                                                                                 | `[]` (does not add image pull secrets to deployed pods) |
 | `image.registry`          | Metrics Server image registry                                                                                                   | `docker.io`                                             |
@@ -56,20 +56,24 @@ The following tables lists the configurable parameters of the Metrics Server cha
 | `image.tag`               | Metrics Server image tag                                                                                                        | `{TAG_NAME}`                                            |
 | `image.pullPolicy`        | Metrics Server image pull policy                                                                                                | `IfNotPresent`                                          |
 | `nameOverride`            | String to partially override metrics-server.fullname template with a string (will prepend the release name)                     | `nil`                                                   |
+| `replicas`                | Number of metrics-server nodes to deploy                                                                                        | `1`                                                     |
 | `fullnameOverride`        | String to fully override metrics-server.fullname template with a string                                                         | `nil`                                                   |
 | `securePort`              | Port where metrics-server will be running                                                                                       | `8443`                                                  |
+| `hostNetwork`             | Enable hostNetwork mode                                                                                                         | `false`                                                 |
 | `extraArgs`               | Extra arguments to pass to metrics-server on start up                                                                           | {}                                                      |
 | `rbac.create`             | Enable RBAC authentication                                                                                                      | `true`                                                  |
 | `serviceAccount.create`   | Specifies whether a ServiceAccount should be created                                                                            | `true`                                                  |
 | `serviceAccount.name`     | The name of the ServiceAccount to create                                                                                        | Generated using the fullname template                   |
 | `apiService.create`       | Specifies whether the v1beta1.metrics.k8s.io API service should be created (This should not be necessary in k8s version >= 1.8) | `false`                                                 |
 | `podAnnotations`          | Pod annotations                                                                                                                 | `{}`                                                    |
+| `priorityClassName`       | Priority class for pod scheduling                                                                                               | `nil`                                                   |
 | `affinity`                | Map of node/pod affinities                                                                                                      | `{}` (The value is evaluated as a template)             |
 | `nodeSelector`            | Node labels for pod assignment                                                                                                  | `{}` (The value is evaluated as a template)             |
 | `tolerations`             | Tolerations for pod assignment                                                                                                  | `[]` (The value is evaluated as a template)             |
 | `service.type`            | Kubernetes Service type                                                                                                         | `ClusterIP`                                             |
 | `service.port`            | Kubernetes Service port                                                                                                         | `443`                                                   |
 | `service.annotations`     | Annotations for the Service                                                                                                     | {}                                                      |
+| `service.labels`          | Labels for the Service                                                                                                     | {}                                                      |
 | `service.loadBalancerIP`  | LoadBalancer IP if Service type is `LoadBalancer`                                                                               | `nil`                                                   |
 | `service.nodePort`        | NodePort if Service type is `LoadBalancer` or `NodePort`                                                                        | `nil`                                                   |
 | `resources`               | The [resources] to allocate for the container                                                                                   | `{}`                                                    |
@@ -103,9 +107,34 @@ Bitnami will release a new chart updating its containers if a new version of the
 
 In order to enable Role-based access control for Metrics Servier you can use the following parameter: `rbac.create=true`
 
+## Troubleshooting
+
+Find more information about how to deal with common errors related to Bitnami’s Helm charts in [this troubleshooting guide](https://docs.bitnami.com/general/how-to/troubleshoot-helm-chart-issues).
+
 ## Upgrading
 
-### 4.0.0
+### To 5.0.0
+
+[On November 13, 2020, Helm v2 support was formally finished](https://github.com/helm/charts#status-of-the-project), this major version is the result of the required changes applied to the Helm Chart to be able to incorporate the different features added in Helm v3 and to be consistent with the Helm project itself regarding the Helm v2 EOL.
+
+**What changes were introduced in this major version?**
+
+- Previous versions of this Helm Chart use `apiVersion: v1` (installable by both Helm 2 and 3), this Helm Chart was updated to `apiVersion: v2` (installable by Helm 3 only). [Here](https://helm.sh/docs/topics/charts/#the-apiversion-field) you can find more information about the `apiVersion` field.
+- The different fields present in the *Chart.yaml* file has been ordered alphabetically in a homogeneous way for all the Bitnami Helm Charts
+
+**Considerations when upgrading to this version**
+
+- If you want to upgrade to this version from a previous one installed with Helm v3, you shouldn't face any issues
+- If you want to upgrade to this version using Helm v2, this scenario is not supported as this version doesn't support Helm v2 anymore
+- If you installed the previous version with Helm v2 and wants to upgrade to this version with Helm v3, please refer to the [official Helm documentation](https://helm.sh/docs/topics/v2_v3_migration/#migration-use-cases) about migrating from Helm v2 to v3
+
+**Useful links**
+
+- https://docs.bitnami.com/tutorials/resolve-helm2-helm3-post-migration-issues/
+- https://helm.sh/docs/topics/v2_v3_migration/
+- https://helm.sh/blog/migrate-from-helm-v2-to-helm-v3/
+
+### To 4.0.0
 
 Backwards compatibility is not guaranteed unless you modify the labels used on the chart's deployments.
 Use the workaround below to upgrade from versions previous to 4.0.0. The following example assumes that the release name is metrics-server:

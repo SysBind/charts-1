@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "influxdb.fullname" . }}
-  labels: 
+  labels:
     {{- include "influxdb.labels" . | nindent 4 }}
     app.kubernetes.io/component: influxdb
 spec:
@@ -14,12 +14,12 @@ spec:
     rollingUpdate: null
     {{- end }}
   selector:
-    matchLabels: 
+    matchLabels:
       {{- include "influxdb.matchLabels" . | nindent 6 }}
       app.kubernetes.io/component: influxdb
   template:
     metadata:
-      labels: 
+      labels:
         {{- include "influxdb.labels" . | nindent 8 }}
         app.kubernetes.io/component: influxdb
     spec:
@@ -30,7 +30,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             - topologyKey: "kubernetes.io/hostname"
               labelSelector:
-                matchLabels: 
+                matchLabels:
                   {{- include "influxdb.matchLabels" . | nindent 18 }}
                   app.kubernetes.io/component: influxdb
         {{- else if eq .Values.influxdb.antiAffinity "soft" }}
@@ -40,7 +40,7 @@ spec:
               podAffinityTerm:
                 topologyKey: kubernetes.io/hostname
                 labelSelector:
-                  matchLabels: 
+                  matchLabels:
                     {{- include "influxdb.matchLabels" . | nindent 20 }}
                     app.kubernetes.io/component: influxdb
         {{- end }}
@@ -63,17 +63,27 @@ spec:
           image: {{ include "influxdb.volumePermissions.image" . }}
           imagePullPolicy: {{ .Values.volumePermissions.image.pullPolicy | quote }}
           command:
-            - sh
+            - /bin/bash
             - -c
             - |
               mkdir -p /bitnami/influxdb/{data,meta,wal}
-              chown -R "{{ .Values.influxdb.securityContext.runAsUser }}:{{ .Values.influxdb.securityContext.fsGroup }}" /bitnami/influxdb/{data,meta,wal}
+              chmod 700 /bitnami/influxdb/{data,meta,wal}
+              find /bitnami/influxdb/{data,meta,wal} -mindepth 0 -maxdepth 1 | \
+              {{- if eq ( toString ( .Values.volumePermissions.securityContext.runAsUser )) "auto" }}
+                xargs chown -R `id -u`:`id -G | cut -d " " -f2`
+              {{- else }}
+                xargs chown -R {{ .Values.influxdb.securityContext.runAsUser }}:{{ .Values.influxdb.securityContext.fsGroup }}
+              {{- end }}
+          {{- if eq ( toString ( .Values.volumePermissions.securityContext.runAsUser )) "auto" }}
           securityContext:
-            runAsUser: 0
+          {{- else }}
+          securityContext:
+            runAsUser: {{ .Values.volumePermissions.securityContext.runAsUser }}
+          {{- end }}
           volumeMounts:
             - name: data
               mountPath: /bitnami/influxdb
-        {{- end }}
+      {{- end }}
       containers:
         - name: influxdb
           image: {{ include "influxdb.image" . }}

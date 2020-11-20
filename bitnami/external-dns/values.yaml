@@ -13,7 +13,7 @@
 image:
   registry: docker.io
   repository: bitnami/external-dns
-  tag: 0.7.0-debian-10-r21
+  tag: 0.7.4-debian-10-r41
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -38,9 +38,10 @@ sources:
   # - crd
   - service
   - ingress
+  # - contour-httpproxy
 
 ## DNS provider where the DNS records will be created. Available providers are:
-## - aws, azure, azure-private-dns, cloudflare, coredns, designate, digitalocean, google, infoblox, rfc2136, transip
+## - alibabacloud, aws, azure, azure-private-dns, cloudflare, coredns, designate, digitalocean, google, infoblox, rfc2136, transip
 ##
 provider: aws
 
@@ -69,6 +70,23 @@ publishHostIP: false
 ##
 serviceTypeFilter: []
 
+## Alibaba cloud configuration to be set via arguments/env. variables
+##
+alibabacloud:
+  ## These will be added to /etc/kubernetes/alibaba-cloud.json via secret
+  accessKeyId: ""
+  accessKeySecret: ""
+  regionId: ""
+
+  ## Use an existing secret with key "alibaba-cloud.json" defined.
+  ## This ignores alibabacloud.accessKeyId, and alibabacloud.accessKeySecret
+  ##
+  # secretName:
+
+  ## Zone Filter. Available values are: public, private, or no value for both
+  ##
+  zoneType: ""
+
 ## AWS configuration to be set via arguments/env. variables
 ##
 aws:
@@ -94,6 +112,9 @@ aws:
   ## AWS Role to assume
   ##
   assumeRoleArn: ""
+  ## Maximum number of retries for AWS API calls before giving up.
+  ##
+  apiRetries: 3
   ## Maximum number of changes that will be applied in each batch
   ##
   batchChangeSize: 1000
@@ -256,14 +277,31 @@ infoblox:
   wapiUsername: "admin"
   wapiPassword: ""
   gridHost: ""
+  view: ""
   ## Optional keys
   ##
+  ## Existing secret name, when in place wapiUsername and wapiPassword are not required
+  ## secretName: ""
   domainFilter: ""
   noSslVerify: false
   wapiPort: ""
   wapiVersion: ""
   wapiConnectionPoolSize: ""
   wapiHttpTimeout: ""
+
+## OVH configuration to be set via arguments/env. variables
+##
+ovh:
+  consumerKey: ""
+  applicationKey: ""
+  applicationSecret: ""
+
+## Scaleway configuration to be set via arguments/env. variables
+##
+scaleway:
+  scwAccessKey: ""
+  scwSecretKey: ""
+  scwDefaultOrganizationId: ""
 
 ## RFC 2136 configuration to be set via arguments/env. variables
 ##
@@ -275,6 +313,8 @@ rfc2136:
   tsigSecretAlg: hmac-sha256
   tsigKeyname: externaldns-key
   tsigAxfr: true
+  ## Possible units [ns, us, ms, s, m, h], see more https://golang.org/pkg/time/#ParseDuration
+  minTTL: "0s"
 
 ## PowerDNS configuration to be set via arguments/env. variables
 ##
@@ -282,6 +322,9 @@ pdns:
   apiUrl: ""
   apiPort: "8081"
   apiKey: ""
+  ## Use an external secret where pdns_api_key is defined
+  ##
+  # secretName: ""
 
 ## TransIP configuration to be set via arguments/env. variables
 ##
@@ -293,9 +336,19 @@ transip:
   ## API key that is authorised for the account
   apiKey: ""
 
+## VinylDNS configuration to be set via arguments/env. variables
+##
+vinyldns:
+  host: ""
+  accessKey: ""
+  secretKey: ""
+
 ## Limit possible target zones by domain suffixes (optional)
 ##
 domainFilters: []
+## Exclude subdomains (optional)
+##
+excludeDomains: []
 ## Limit possible target zones by zone id (optional)
 ##
 zoneIdFilters: []
@@ -332,10 +385,6 @@ txtOwnerId: ""
 ## Prefix to create a TXT record with a name following the pattern prefix.<CNAME record>
 ##
 # txtPrefix: ""
-## Load balancer service to be used; ie: custom-istio-namespace/custom-istio-ingressgateway.
-## Omit to use the default (istio-system/istio-ingressgateway)
-##
-istioIngressGateways: []
 
 ## Extra Arguments to passed to external-dns
 ##
@@ -417,24 +466,31 @@ service:
   ##
   annotations: {}
 
+  ## Provide any additional labels which may be required. This can be used to
+  ## have external-dns show up in `kubectl cluster-info`
+  ##  kubernetes.io/cluster-service: "true"
+  ##  kubernetes.io/name: "external-dns"
+  labels: {}
+
+## ServiceAccount parameters
+## https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+##
+serviceAccount:
+  create: true
+  ## Service Account for pods
+  ##
+  name:
+  ## Annotations for the Service Account
+  ##
+  annotations: {}
+
 ## RBAC parameteres
 ## https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 ##
 rbac:
   create: true
-  ## Determine whether a Service Account should be created
-  ## or reuse a exiting one
-  ##
-  serviceAccountCreate: true
-
-  ## Service Account for pods
-  ## https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-  ##
-  serviceAccountName:
-
-  ## Annotations for the Service Account
-  ##
-  serviceAccountAnnotations: {}
+  ## Deploys ClusterRole by Default
+  clusterRole: true
   ## RBAC API version
   ##
   apiVersion: v1beta1

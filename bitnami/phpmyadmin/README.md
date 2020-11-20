@@ -2,7 +2,7 @@
 
 [phpMyAdmin](https://www.phpmyadmin.net/) is a free and open source administration tool for MySQL and MariaDB. As a portable web application written primarily in PHP, it has become one of the most popular MySQL administration tools, especially for web hosting services.
 
-## TL;DR;
+## TL;DR
 
 ```console
 $ helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -18,6 +18,7 @@ Bitnami charts can be used with [Kubeapps](https://kubeapps.com/) for deployment
 ## Prerequisites
 
 - Kubernetes 1.8+ with Beta APIs enabled
+- Helm 2.12+ or Helm 3.0-beta3+
 
 ## Installing the Chart
 
@@ -45,8 +46,8 @@ The command removes all the Kubernetes components associated with the chart and 
 
 The following table lists the configurable parameters of the phpMyAdmin chart and their default values.
 
-| Parameter                    | Description                                                                                             | Default                                                                                       |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Parameter                    | Description                                                                                             | Default                                                      |
+|------------------------------|---------------------------------------------------------------------------------------------------------|--------------------------------------------------------------|
 | `global.imageRegistry`       | Global Docker image registry                                                                            | `nil`                                                        |
 | `global.imagePullSecrets`    | Global Docker registry secret names as an array                                                         | `[]` (does not add image pull secrets to deployed pods)      |
 | `image.registry`             | phpMyAdmin image registry                                                                               | `docker.io`                                                  |
@@ -58,6 +59,7 @@ The following table lists the configurable parameters of the phpMyAdmin chart an
 | `fullnameOverride`           | String to fully override phpmyadmin.fullname template with a string                                     | `nil`                                                        |
 | `service.type`               | Type of service for phpMyAdmin frontend                                                                 | `ClusterIP`                                                  |
 | `service.port`               | Port to expose service                                                                                  | `80`                                                         |
+| `db.allowArbitraryServer`    | Enable connection to arbitrary MySQL server                                                             | `true`                                                       |
 | `db.port`                    | Database port to use to connect                                                                         | `3306`                                                       |
 | `db.chartName`               | Database suffix if included in the same release                                                         | `nil`                                                        |
 | `db.host`                    | Database host to connect to                                                                             | `nil`                                                        |
@@ -77,6 +79,11 @@ The following table lists the configurable parameters of the phpMyAdmin chart an
 | `ingress.hosts[0].tls`       | Utilize TLS backend in ingress                                                                          | `false`                                                      |
 | `ingress.hosts[0].tlsHosts`  | Array of TLS hosts for ingress record (defaults to `ingress.hosts[0].name` if `nil`)                    | `nil`                                                        |
 | `ingress.hosts[0].tlsSecret` | TLS Secret (certificates)                                                                               | `phpmyadmin.local-tls-secret`                                |
+| `extraEnvVars`               | Any extra environment variables to be passed to the pod (evaluated as a template)                       | `{}`                                                         |
+| `extraEnvVarsCM`             | Name of a Config Map containing extra environment variables to be passed to the pod (evaluated as a template) | `nil`                                                  |
+| `extraEnvVarsSecret`         | Secret with extra environment variables                                                                 | `nil`                                                        |
+| `podSecurityContext`         | phpMyAdmin pods' Security Context                                                                       | `{ fsGroup: "1001" }`                                        |
+| `containerSecurityContext`   | phpMyAdmin containers' Security Context                                                                 | `{ runAsUser: "1001" }`                                      |
 | `resources.limits`           | The resources limits for the PhpMyAdmin container                                                       | `{}`                                                         |
 | `resources.requests`         | The requested resources for the PhpMyAdmin container                                                    | `{}`                                                         |
 | `livenessProbe`              | Liveness probe configuration for PhpMyAdmin                                                             | `Check values.yaml file`                                     |
@@ -122,7 +129,26 @@ It is strongly recommended to use immutable tags in a production environment. Th
 
 Bitnami will release a new chart updating its containers if a new version of the main container, significant changes, or critical vulnerabilities exist.
 
+## Troubleshooting
+
+Find more information about how to deal with common errors related to Bitnami’s Helm charts in [this troubleshooting guide](https://docs.bitnami.com/general/how-to/troubleshoot-helm-chart-issues).
+
 ## Upgrading
+
+### To 6.0.0
+
+The [Bitnami phpMyAdmin](https://github.com/bitnami/bitnami-docker-phpmyadmin) image was migrated to a "non-root" user approach. Previously the container ran as the `root` user and the Apache daemon was started as the `daemon` user. From now on, both the container and the Apache daemon run as user `1001`. You can revert this behavior by setting the parameters `containerSecurityContext.runAsUser` to `root`.
+Chart labels and Ingress configuration were also adapted to follow the Helm charts best practices.
+
+Consequences:
+
+- The HTTP/HTTPS ports exposed by the container are now `8080/8443` instead of `80/443`.
+- No writing permissions will be granted on `config.inc.php` by default.
+- Backwards compatibility is not guaranteed.
+
+To upgrade to `6.0.0`, backup your previous MariaDB databases, install a new phpMyAdmin chart and import the MariaDB backups.
+
+This version also introduces `bitnami/common`, a [library chart](https://helm.sh/docs/topics/library_charts/#helm) as a dependency. More documentation about this new utility could be found [here](https://github.com/bitnami/charts/tree/master/bitnami/common#bitnami-common-library-chart). Please, make sure that you have updated the chart dependencies before executing any upgrade.
 
 ### To 1.0.0
 
